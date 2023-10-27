@@ -5,7 +5,7 @@ from tensorflow.keras.models import Model
 # Define the input shape (x, y, z, c)
 input_shape = (x, y, z, c)
 
-# Define the encoder
+# encoder
 encoder_input = Input(shape=input_shape)
 x = Conv3D(64, (3, 3, 3), activation='relu')(encoder_input)
 x = MaxPooling3D((2, 2, 2))(x)
@@ -13,11 +13,11 @@ x = Conv3D(128, (3, 3, 3), activation='relu')(x)
 x = MaxPooling3D((2, 2, 2))(x)
 x = Conv3D(256, (3, 3, 3), activation='relu')(x)
 x = Flatten()(x)
-encoded = Dense(latent_dim)(x)  # Define 'latent_dim' based on your choice
+encoded = Dense(latent_dim)(x)  
 
 encoder = Model(encoder_input, encoded)
 
-# Define the decoder
+# decoder
 decoder_input = Input(shape=(latent_dim,))
 x = Dense(256, activation='relu')(decoder_input)
 x = Dense(128, activation='relu')(x)
@@ -27,22 +27,19 @@ decoded = Reshape(input_shape)(x)
 
 decoder = Model(decoder_input, decoded)
 
-# Create the variational autoencoder by combining the encoder and decoder
-vae = Model(encoder_input, decoder(encoder(encoder_input)))
 
-# Compile the VAE
-vae.compile(optimizer='adam', loss='mean_squared_error')  # Use 'mean_squared_error' for mesh generation
+v = Model(encoder_input, decoder(encoder(encoder_input)))
 
-# Train the VAE on the training data
-vae.fit(training_data, training_data, epochs=epochs, batch_size=batch_size)
 
-# Generate a mesh from a reduced-dimensional representation
+v.compile(optimizer='adam', loss='mean_squared_error')  # Use 'mean_squared_error' for mesh generation
+
+
+v.fit(training_data, training_data, epochs=epochs, batch_size=batch_size)
+
+
 encoded_representation = encoder.predict(input_mesh)
 generated_mesh = decoder.predict(encoded_representation)
 
-# Save the generated mesh to an STL file
-# You'll need a suitable library for saving 3D mesh data to STL format.
-# One option is to use the 'numpy-stl' library for this purpose.
 from stl import mesh
 stl_mesh = mesh.Mesh(generated_mesh)
 stl_mesh.save('generated_mesh.stl')
